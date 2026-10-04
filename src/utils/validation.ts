@@ -3,8 +3,42 @@ export function normaliseText(raw: string): string {
   return raw
     .toLowerCase()
     .trim()
-    .replace(/[.,!?;:'"]/g, '')
+    .replace(/[.,!?;:'"’]/g, '')
     .replace(/\s+/g, ' ')
+}
+
+/**
+ * Reduce common grammatical forms to the target concept used by the activity.
+ * This is intentionally deterministic and local: the prototype does not send
+ * a child's answer to an AI service. The SLT-defined accepted set remains the
+ * source of truth; these mappings only cover safe grammatical variants.
+ */
+export function canonicaliseAnswer(role: StepConfig['role'], value: string): string {
+  const text = normaliseText(value)
+  if (role !== 'DOING') return text
+
+  const withoutAuxiliary = text.replace(/^(is|are|was|were) /, '')
+  const verbVariants: Record<string, string> = {
+    read: 'reading',
+    reads: 'reading',
+    reading: 'reading',
+    eat: 'eating',
+    eats: 'eating',
+    eating: 'eating',
+    blow: 'blowing',
+    blows: 'blowing',
+    blowing: 'blowing',
+    drink: 'drinking',
+    drinks: 'drinking',
+    drinking: 'drinking',
+  }
+
+  if (verbVariants[withoutAuxiliary]) return verbVariants[withoutAuxiliary]
+
+  // Accept a short object phrase where the target is the same action, e.g.
+  // “read the map” or “reading a map” for the reading target.
+  const action = withoutAuxiliary.replace(/^(read|reads|reading) (the|a) (map|book)$/, 'reading')
+  return verbVariants[action] ?? text
 }
 
 export interface StepConfig {
@@ -71,6 +105,19 @@ export function validateTyped(raw: string, step: StepConfig): ValidationResult {
     const isAlt = step.semanticAlts.has(n)
     return { accepted: true, isSemanticAlt: isAlt, displayValue: fmt(step.role, n) }
   }
+
+  const canonical = canonicaliseAnswer(step.role, n)
+  const equivalent = [...step.acceptedTyped].find(candidate => canonicaliseAnswer(step.role, candidate) === canonical)
+  if (equivalent) {
+    return {
+      accepted: true,
+      isSemanticAlt: true,
+      // Use the configured target form for a stable sentence (e.g. “read” →
+      // “is reading”), while still recording the child's original response.
+      displayValue: fmt(step.role, equivalent),
+    }
+  }
+
   return { accepted: false, isSemanticAlt: false, displayValue: '' }
 }
 
@@ -99,11 +146,13 @@ export const EX1_DOING: StepConfig = {
   correctCardId: 'reading',
   acceptedTyped: new Set([
     'reading', 'is reading',
+    'read', 'reads', 'read the map', 'read a map',
     'looking at the map', 'looking at a map',
     'studying the map', 'studying a map',
     'checking the map', 'checking a map',
   ]),
   semanticAlts: new Set([
+    'read', 'reads', 'read the map', 'read a map',
     'looking at the map', 'looking at a map',
     'studying the map', 'studying a map',
     'checking the map', 'checking a map',

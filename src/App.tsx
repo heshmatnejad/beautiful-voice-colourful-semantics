@@ -25,6 +25,8 @@ interface ClinicConfig {
   typedAnswerEnabled: boolean
   supportLevel: SessionConfig['supportLevel']
   exerciseCount: number
+  topics: string[]
+  showResultsToChild: boolean
 }
 
 const DEFAULT_SESSION_CONFIG: SessionConfig = {
@@ -32,6 +34,8 @@ const DEFAULT_SESSION_CONFIG: SessionConfig = {
   typedAnswerEnabled: true,
   supportLevel: 'standard',
   exerciseCount: 3,
+  topics: ['Pirates', 'Everyday actions'],
+  showResultsToChild: true,
 }
 
 export default function App() {

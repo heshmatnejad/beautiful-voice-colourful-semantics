@@ -7,6 +7,8 @@ interface ClinicConfig {
   typedAnswerEnabled: boolean
   supportLevel: SupportLevel
   exerciseCount: number
+  topics: string[]
+  showResultsToChild: boolean
 }
 
 interface Props {
@@ -19,8 +21,16 @@ export function ColorfulSemanticsConfig({ onAddToHomework, onStartTraining, onBa
   const [typedEnabled, setTypedEnabled] = useState(true)
   const [supportLevel, setSupportLevel] = useState<SupportLevel>('standard')
   const [exerciseCount, setExerciseCount] = useState(3)
+  const [topics, setTopics] = useState('Pirates, Everyday actions')
+  const [showResultsToChild, setShowResultsToChild] = useState(true)
 
-  const config: ClinicConfig = { typedAnswerEnabled: typedEnabled, supportLevel, exerciseCount }
+  const config: ClinicConfig = {
+    typedAnswerEnabled: typedEnabled,
+    supportLevel,
+    exerciseCount,
+    topics: topics.split(',').map(topic => topic.trim()).filter(Boolean),
+    showResultsToChild,
+  }
 
   return (
     <BVClinicianShell activeSidebarItem="training">
@@ -82,6 +92,19 @@ export function ColorfulSemanticsConfig({ onAddToHomework, onStartTraining, onBa
                 <div className="bg-white border border-[#7c3aed]/30 rounded-xl p-4 ring-1 ring-[#7c3aed]/10">
                   <h3 className="font-semibold text-sm text-gray-700 mb-3">Target &amp; support settings</h3>
 
+                  {/* Therapist-authored topics */}
+                  <div className="mb-4 pb-4 border-b border-gray-100">
+                    <label htmlFor="topic-input" className="text-sm text-gray-700 font-medium">Topics</label>
+                    <p className="text-xs text-gray-400 mt-0.5 mb-2">Separate topics with commas. These seed future exercise generation.</p>
+                    <input
+                      id="topic-input"
+                      value={topics}
+                      onChange={e => setTopics(e.target.value)}
+                      placeholder="e.g. pirates, animals, school"
+                      className="w-full border border-gray-200 focus:border-[#7c3aed] rounded-lg px-3 py-2 text-sm outline-none"
+                    />
+                  </div>
+
                   {/* Exercise count */}
                   <div className="flex items-center justify-between mb-4">
                     <div>
@@ -141,6 +164,20 @@ export function ColorfulSemanticsConfig({ onAddToHomework, onStartTraining, onBa
                       ))}
                     </div>
                   </div>
+
+                  {/* Child-facing results */}
+                  <label className="mt-4 flex items-start gap-3 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2.5 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={showResultsToChild}
+                      onChange={e => setShowResultsToChild(e.target.checked)}
+                      className="mt-0.5 accent-[#7c3aed]"
+                    />
+                    <span>
+                      <span className="text-sm font-medium text-gray-800">Show detailed results to child</span>
+                      <span className="block text-xs text-gray-500 mt-0.5">If disabled, only the completion message is shown.</span>
+                    </span>
+                  </label>
                 </div>
 
                 {/* AI validation note */}

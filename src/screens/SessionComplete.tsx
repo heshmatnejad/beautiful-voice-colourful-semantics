@@ -11,6 +11,7 @@ interface Props {
 export function SessionComplete({ sessionResults, onShowParentSummary, onSeeSummary, onFinish }: Props) {
   const { config, exercises } = sessionResults
   const isHome = config.launchContext === 'home'
+  const showDetails = config.showResultsToChild
   const completed = exercises.filter(e => e?.completed)
   const semanticAlts = completed.reduce((sum, e) =>
     sum + (e ? [e.who, e.doing, e.what].filter(r => r.isSemanticAlt).length : 0), 0)
@@ -31,7 +32,7 @@ export function SessionComplete({ sessionResults, onShowParentSummary, onSeeSumm
             <p className="text-2xl font-bold text-[#7c3aed] mb-1">
               You completed {completed.length} {completed.length === 1 ? 'activity' : 'activities'}.
             </p>
-            {semanticAlts > 0 && (
+            {showDetails && semanticAlts > 0 && (
               <p className="text-lg text-purple-500 mt-2">
                 ✨ You used your own words — amazing!
               </p>
@@ -39,7 +40,7 @@ export function SessionComplete({ sessionResults, onShowParentSummary, onSeeSumm
           </div>
 
           {/* Sentence recap — simple, large */}
-          <div className="bg-white border border-gray-200 rounded-3xl p-6 mb-10 shadow-sm text-left">
+          {showDetails && <div className="bg-white border border-gray-200 rounded-3xl p-6 mb-10 shadow-sm text-left">
             <h2 className="font-bold text-gray-500 text-sm uppercase tracking-widest mb-4 text-center">Your sentences</h2>
             <div className="space-y-4">
               {completed.map(ex => {
@@ -54,18 +55,18 @@ export function SessionComplete({ sessionResults, onShowParentSummary, onSeeSumm
                 )
               })}
             </div>
-          </div>
+          </div>}
 
           {/* Actions */}
           <div className="flex gap-4 justify-center">
             {isHome ? (
               <>
-                <button
+                {showDetails && <button
                   onClick={onShowParentSummary}
                   className="border-2 border-[#7c3aed] text-[#7c3aed] hover:bg-[#7c3aed] hover:text-white font-bold px-8 py-4 rounded-2xl transition-colors text-lg"
                 >
                   Show grown-up
-                </button>
+                </button>}
                 <button
                   onClick={onFinish}
                   className="bg-[#7c3aed] hover:bg-[#6d28d9] text-white font-bold px-8 py-4 rounded-2xl transition-colors text-lg shadow-md"
@@ -75,12 +76,12 @@ export function SessionComplete({ sessionResults, onShowParentSummary, onSeeSumm
               </>
             ) : (
               <>
-                <button
+                {showDetails && <button
                   onClick={onSeeSummary}
                   className="border-2 border-[#7c3aed] text-[#7c3aed] hover:bg-[#7c3aed] hover:text-white font-bold px-8 py-4 rounded-2xl transition-colors text-lg"
                 >
                   See session summary
-                </button>
+                </button>}
                 <button
                   onClick={onFinish}
                   className="bg-[#7c3aed] hover:bg-[#6d28d9] text-white font-bold px-8 py-4 rounded-2xl transition-colors text-lg shadow-md"

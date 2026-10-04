@@ -15,19 +15,44 @@ export type ExerciseId = 1 | 2 | 3
 
 // ── TTS ────────────────────────────────────────────────────────────────────
 
-function speak(text: string): void {
+function speak(text: string): boolean {
   try {
-    if (!('speechSynthesis' in window)) return
-    window.speechSynthesis.cancel()
+    if (!('speechSynthesis' in window)) return false
+    const synthesis = window.speechSynthesis
+    synthesis.cancel()
     const u = new SpeechSynthesisUtterance(text)
+    u.lang = 'en-GB'
     u.rate = 0.85
     u.pitch = 1.05
-    window.speechSynthesis.speak(u)
-  } catch { /* silent fail */ }
+    synthesis.resume()
+    synthesis.speak(u)
+    return true
+  } catch { return false }
 }
 
 function cancelSpeech(): void {
   try { if ('speechSynthesis' in window) window.speechSynthesis.cancel() } catch { /* */ }
+}
+
+interface SpeechRecognitionLike {
+  lang: string
+  interimResults: boolean
+  maxAlternatives: number
+  onresult: ((event: { results: ArrayLike<ArrayLike<{ transcript: string }>> }) => void) | null
+  onerror: ((event: { error?: string }) => void) | null
+  onend: (() => void) | null
+  start: () => void
+  stop: () => void
+}
+
+type SpeechRecognitionConstructor = new () => SpeechRecognitionLike
+
+function getSpeechRecognitionConstructor(): SpeechRecognitionConstructor | null {
+  const browserWindow = window as Window & {
+    SpeechRecognition?: SpeechRecognitionConstructor
+    webkitSpeechRecognition?: SpeechRecognitionConstructor
+  }
+  return browserWindow.SpeechRecognition ?? browserWindow.webkitSpeechRecognition ?? null
 }
 
 // ── UX constants ───────────────────────────────────────────────────────────
@@ -74,6 +99,8 @@ const FALLBACK_CONFIG: SessionConfig = {
   typedAnswerEnabled: true,
   supportLevel: 'standard',
   exerciseCount: 3,
+  topics: ['Pirates', 'Everyday actions'],
+  showResultsToChild: true,
 }
 
 // ── Card data ──────────────────────────────────────────────────────────────
@@ -300,8 +327,14 @@ function HintCallout() {
   )
 }
 
-function TypedInput({ value, onChange, onSubmit, placeholder }: {
-  value: string; onChange: (v: string) => void; onSubmit: () => void; placeholder: string
+function TypedInput({ value, onChange, onSubmit, onVoiceInput, isListening, voiceSupported, placeholder }: {
+  value: string
+  onChange: (v: string) => void
+  onSubmit: () => void
+  onVoiceInput: () => void
+  isListening: boolean
+  voiceSupported: boolean
+  placeholder: string
 }) {
   return (
     <div className="flex items-center gap-2 flex-shrink-0">
@@ -321,9 +354,21 @@ function TypedInput({ value, onChange, onSubmit, placeholder }: {
       >
         Submit
       </button>
-      <button title="Voice input (coming soon)" tabIndex={-1}
-        className="w-11 h-11 rounded-xl bg-gray-100 border border-gray-200 flex items-center justify-center text-gray-400 cursor-default flex-shrink-0 text-xl">
-        🎙️
+      <button
+        type="button"
+        title={voiceSupported ? (isListening ? 'Listening…' : 'Use voice input') : 'Voice input is not supported in this browser'}
+        aria-label={voiceSupported ? 'Use voice input' : 'Voice input is not supported in this browser'}
+        onClick={onVoiceInput}
+        disabled={!voiceSupported || isListening}
+        className={`w-11 h-11 rounded-xl border flex items-center justify-center flex-shrink-0 text-xl transition-colors ${
+          isListening
+            ? 'bg-red-100 border-red-300 text-red-600 animate-pulse'
+            : voiceSupported
+              ? 'bg-purple-50 border-purple-200 text-purple-600 hover:bg-purple-100'
+              : 'bg-gray-100 border-gray-200 text-gray-300 cursor-not-allowed'
+        }`}
+      >
+        {isListening ? '⏺' : '🎙️'}
       </button>
     </div>
   )
@@ -419,8 +464,12 @@ function ExerciseCore({
 }) {
   const [currentIdx, setCurrentIdx] = useState(0)
   const [steps, setSteps] = useState<StepState[]>(() => [0, 1, 2].map(initStep))
+  const [voiceListening, setVoiceListening] = useState(false)
+  const [voiceError, setVoiceError] = useState<string | null>(null)
+  const recognitionRef = useRef<SpeechRecognitionLike | null>(null)
   const { supportLevel, typedAnswerEnabled, exerciseCount } = sessionConfig ?? FALLBACK_CONFIG
   const isComplete = currentIdx === 3
+  const voiceRecognitionSupported = Boolean(getSpeechRecognitionConstructor())
 
   // ── TTS: auto-read question on step change ──
   useEffect(() => {
@@ -441,7 +490,10 @@ function ExerciseCore({
   }, [isComplete]) // eslint-disable-line
 
   // ── TTS: cleanup on unmount ──
-  useEffect(() => () => cancelSpeech(), [])
+  useEffect(() => () => {
+    cancelSpeech()
+    recognitionRef.current?.stop()
+  }, [])
 
   const mutStep = (idx: number, fn: (s: StepState) => StepState) =>
     setSteps(prev => prev.map((s, i) => i === idx ? fn(s) : s))
@@ -492,6 +544,48 @@ function ExerciseCore({
     if (!step.typedInput.trim()) return
     const r = validateTyped(step.typedInput, def.steps[currentIdx])
     r.accepted ? acceptCurrentStep(r.displayValue, step.typedInput, 'typed', r.isSemanticAlt) : rejectCurrentStep(null)
+  }
+
+  const handleVoiceInput = () => {
+    const Recognition = getSpeechRecognitionConstructor()
+    if (!Recognition || isComplete) {
+      setVoiceError('Voice input is not supported in this browser. You can type the answer instead.')
+      return
+    }
+
+    setVoiceError(null)
+    const recognition = new Recognition()
+    recognition.lang = 'en-GB'
+    recognition.interimResults = false
+    recognition.maxAlternatives = 1
+    recognition.onresult = event => {
+      const transcript = event.results[0]?.[0]?.transcript?.trim()
+      if (transcript) {
+        mutStep(currentIdx, s => ({ ...s, typedInput: transcript }))
+        setVoiceError(null)
+      } else {
+        setVoiceError('I could not hear an answer. Please try again or type it instead.')
+      }
+    }
+    recognition.onerror = event => {
+      const message = event.error === 'not-allowed'
+        ? 'Microphone permission was denied. Please allow microphone access or type the answer instead.'
+        : 'Voice input could not be used. Please try again or type the answer instead.'
+      setVoiceError(message)
+      setVoiceListening(false)
+    }
+    recognition.onend = () => {
+      setVoiceListening(false)
+      recognitionRef.current = null
+    }
+    recognitionRef.current = recognition
+    setVoiceListening(true)
+    try {
+      recognition.start()
+    } catch {
+      setVoiceListening(false)
+      setVoiceError('Voice input could not be started. Please type the answer instead.')
+    }
   }
 
   const handleHint = () => {
@@ -562,12 +656,21 @@ function ExerciseCore({
                   <FeedbackBanner type={currentStep.feedbackType ?? 'error'} message={currentStep.feedback} />
                 )}
 
+                {voiceError && (
+                  <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-2 text-sm font-medium text-red-800" role="status">
+                    {voiceError}
+                  </div>
+                )}
+
                 {/* Typed input */}
                 {typedAnswerEnabled && (
                   <TypedInput
                     value={currentStep.typedInput}
                     onChange={v => mutStep(currentIdx, s => ({ ...s, typedInput: v }))}
                     onSubmit={handleTypedSubmit}
+                    onVoiceInput={handleVoiceInput}
+                    isListening={voiceListening}
+                    voiceSupported={voiceRecognitionSupported}
                     placeholder={currentRole === 'WHO' ? 'Type a person…' : currentRole === 'DOING' ? 'Type a doing word…' : 'Type a thing…'}
                   />
                 )}

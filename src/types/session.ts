@@ -33,6 +33,10 @@ export interface SessionConfig {
   typedAnswerEnabled: boolean
   supportLevel: SupportLevel
   exerciseCount: number
+  /** Optional therapist-authored topics used to seed exercise generation. */
+  topics: string[]
+  /** Controls whether the child-facing completion screen exposes results. */
+  showResultsToChild: boolean
 }
 
 export interface SessionResults {
