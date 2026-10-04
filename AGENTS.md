@@ -1,6 +1,6 @@
-# figma-make-app
+# beautiful-voice-colourful-semantics
 
-React + Vite + Tailwind CSS project running inside Figma Make.
+Vue 3 + Vite + Tailwind CSS prototype for the Beautiful Voice Colourful Semantics activity.
 
 ## Development Server
 
@@ -13,8 +13,8 @@ A Vite development server is **already running** on `$PORT` (default 8443). You 
 
 This is the canonical project structure. Start with task-relevant files below. Only follow imports or inspect other files when required, when a documented path is missing, or when the repository contradicts this guide.
 
-- `src/main.tsx` - React entrypoint; imports `src/index.css` and mounts `src/App.tsx` into the `#root` element
-- `src/App.tsx` - Primary application component and the usual starting point for UI work
+- `src/main.ts` - Vue entrypoint; imports `src/index.css` and mounts `src/App.vue` into the `#root` element
+- `src/App.vue` - Primary application component and session state flow
 - `src/index.css` - Global CSS entrypoint and Tailwind CSS v4 import
 - `index.html` - Vite HTML shell containing the `#root` element and loading `src/main.tsx`
 - `package.json` - Project dependencies and the Vite build, development, preview, and formatting scripts
@@ -23,9 +23,9 @@ This is the canonical project structure. Start with task-relevant files below. O
 
 ## Dependencies
 
-- Runtime: React 19 and React DOM 19
+- Runtime: Vue 3
 - Styling: Tailwind CSS v4 with the `@tailwindcss/vite` plugin
-- Build tooling: Vite 8, TypeScript 5.7, and `@vitejs/plugin-react`
+- Build tooling: Vite 8, TypeScript 5.7, and `@vitejs/plugin-vue`
 - Formatting: oxfmt
 
 ## Styling
