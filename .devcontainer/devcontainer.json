@@ -1,0 +1,13 @@
+{
+  "name": "Colourful Semantics preview",
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:1-22-bookworm",
+  "forwardPorts": [8443],
+  "portsAttributes": {
+    "8443": {
+      "label": "Colourful Semantics preview",
+      "onAutoForward": "openPreview"
+    }
+  },
+  "postCreateCommand": "corepack enable && pnpm install --frozen-lockfile",
+  "postStartCommand": "pnpm dev --host 0.0.0.0 > /tmp/colourful-semantics-vite.log 2>&1 &"
+}
