@@ -1,0 +1,10 @@
+{
+  "description": "This interactive web app helps clinicians create pediatric Colorful Semantics exercises, enabling children to build sentences using engaging visuals and supportive feedback.",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}
