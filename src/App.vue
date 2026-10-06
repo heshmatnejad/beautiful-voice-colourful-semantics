@@ -7,12 +7,14 @@ import Exercise from './screens/Exercise.vue'
 import SessionComplete from './screens/SessionComplete.vue'
 import Summary from './screens/Summary.vue'
 import type { ExerciseResult, SessionConfig, SessionResults } from './types/session'
+import { buildTopicPlan } from './data/topicGenerator'
 
 type Screen = 'training' | 'config' | 'intro' | 'exercise' | 'complete' | 'summary'
 const screen = ref<Screen>('training')
 const exerciseNumber = ref<1 | 2 | 3>(1)
 const sessionStart = ref(new Date())
-const config = ref<SessionConfig>({ launchContext: 'clinic', typedAnswerEnabled: true, supportLevel: 'standard', exerciseCount: 3, topics: ['Pirates', 'Everyday actions'], showResultsToChild: true })
+const defaultTopicPlan = buildTopicPlan(['Pirates', 'Everyday actions'], 3)
+const config = ref<SessionConfig>({ launchContext: 'clinic', typedAnswerEnabled: true, supportLevel: 'standard', exerciseCount: 3, topics: ['Pirates', 'Everyday actions'], topicPlan: defaultTopicPlan, exerciseTemplateNumbers: defaultTopicPlan.map(plan => plan.exerciseTemplate), showResultsToChild: true })
 const exerciseResults = ref<(ExerciseResult | null)[]>([null, null, null])
 const sessionResults = computed<SessionResults>(() => ({ config: config.value, exercises: exerciseResults.value, sessionStart: sessionStart.value, sessionEnd: new Date() }))
 
@@ -33,7 +35,7 @@ function reset() { screen.value = 'training' }
   <ClinicianTraining v-if="screen === 'training'" @open="screen = 'config'" />
   <ColorfulSemanticsConfig v-else-if="screen === 'config'" @start="start" @back="reset" />
   <ChildIntro v-else-if="screen === 'intro'" :config="config" @start="screen = 'exercise'" />
-  <Exercise v-else-if="screen === 'exercise'" :exercise-number="exerciseNumber" :config="config" @complete="complete" />
+  <Exercise v-else-if="screen === 'exercise'" :exercise-number="exerciseNumber" :template-number="config.exerciseTemplateNumbers[exerciseNumber - 1] ?? exerciseNumber" :config="config" @complete="complete" />
   <SessionComplete v-else-if="screen === 'complete'" :results="sessionResults" @summary="screen = 'summary'" @finish="reset" />
   <Summary v-else :results="sessionResults" @done="reset" />
 </template>
