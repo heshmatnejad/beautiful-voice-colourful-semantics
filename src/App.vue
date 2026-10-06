@@ -14,7 +14,7 @@ const screen = ref<Screen>('training')
 const exerciseNumber = ref<1 | 2 | 3>(1)
 const sessionStart = ref(new Date())
 const defaultTopicPlan = buildTopicPlan(['Pirates', 'Everyday actions'], 3)
-const config = ref<SessionConfig>({ launchContext: 'clinic', typedAnswerEnabled: true, supportLevel: 'standard', exerciseCount: 3, topics: ['Pirates', 'Everyday actions'], topicPlan: defaultTopicPlan, exerciseTemplateNumbers: defaultTopicPlan.map(plan => plan.exerciseTemplate), showResultsToChild: true })
+const config = ref<SessionConfig>({ launchContext: 'clinic', typedAnswerEnabled: true, supportLevel: 'standard', exerciseCount: 3, topics: ['Pirates', 'Everyday actions'], topicPlan: defaultTopicPlan, exerciseTemplateNumbers: defaultTopicPlan.map(plan => plan.exerciseTemplate), completionPraise: 'You kept trying and built some great sentences!', showResultsToChild: true })
 const exerciseResults = ref<(ExerciseResult | null)[]>([null, null, null])
 const sessionResults = computed<SessionResults>(() => ({ config: config.value, exercises: exerciseResults.value, sessionStart: sessionStart.value, sessionEnd: new Date() }))
 
