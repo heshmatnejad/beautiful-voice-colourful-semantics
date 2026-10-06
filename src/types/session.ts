@@ -45,6 +45,8 @@ export interface SessionConfig {
   /** Controlled mapping from therapist topics to approved exercise templates. */
   topicPlan: TopicPlan[]
   exerciseTemplateNumbers: (1 | 2 | 3)[]
+  /** Therapist-authored praise shown at session completion. */
+  completionPraise: string
   /** Controls whether the child-facing completion screen exposes results. */
   showResultsToChild: boolean
 }
