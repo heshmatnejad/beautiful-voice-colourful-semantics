@@ -3,6 +3,13 @@ export type SupportLevel = 'minimal' | 'standard' | 'higher'
 export type LaunchContext = 'clinic' | 'home'
 export type CueLevel = 0 | 1 | 2  // 0=none, 1=general feedback, 2=semantic hint
 
+export interface TopicPlan {
+  requestedTopic: string
+  matchedTopic: string
+  exerciseTemplate: 1 | 2 | 3
+  isFallback: boolean
+}
+
 export interface RoleData {
   role: 'WHO' | 'DOING' | 'WHAT'
   expectedConcept: string
@@ -35,6 +42,9 @@ export interface SessionConfig {
   exerciseCount: number
   /** Optional therapist-authored topics used to seed exercise generation. */
   topics: string[]
+  /** Controlled mapping from therapist topics to approved exercise templates. */
+  topicPlan: TopicPlan[]
+  exerciseTemplateNumbers: (1 | 2 | 3)[]
   /** Controls whether the child-facing completion screen exposes results. */
   showResultsToChild: boolean
 }
