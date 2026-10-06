@@ -11,7 +11,6 @@ const props = defineProps<{ exerciseNumber: 1 | 2 | 3; templateNumber: 1 | 2 | 3
 const emit = defineEmits<{ complete: [result: ExerciseResult] }>()
 const def = computed(() => EXERCISES[props.templateNumber])
 const currentIndex = ref(0)
-const coins = ref(0)
 const { speak } = useSpeech()
 const voice = useVoiceInput()
 
@@ -44,7 +43,6 @@ watch(currentIndex, () => { if (!isComplete.value) setTimeout(() => speak(questi
 function accept(display: string, raw: string, mode: 'card' | 'typed', semantic: boolean) {
   const current = steps[currentIndex.value]
   current.status = 'accepted'; current.displayValue = display; current.acceptedRaw = raw; current.responseMode = mode; current.isSemanticAlt = semantic; current.totalAttempts += 1; current.feedback = null; current.feedbackType = null; current.rejectedCardId = null
-  coins.value += 1
   const next = currentIndex.value + 1
   currentIndex.value = next
   if (next < 3) steps[next].status = 'active'
@@ -98,7 +96,7 @@ function finish() {
         </template>
         <template v-else><div class="flex-1 flex flex-col items-center justify-center gap-6"><div class="text-8xl">⭐</div><h2 class="text-5xl font-black text-gray-800">Well done!</h2><div class="bg-white border-2 border-purple-200 rounded-3xl px-8 py-5 text-center shadow-md w-full max-w-2xl"><p class="text-sm text-gray-500 uppercase tracking-widest mb-2">Your sentence</p><p class="text-3xl font-bold text-gray-800">“{{ sentence }}” <button @click="speak(sentence)">🔊</button></p></div><div class="flex gap-4"><span v-for="(name, i) in ROLE_KEYS" :key="name" class="px-4 py-2 rounded-xl font-bold" :class="ROLE_STYLE[name].chip">{{ name }} ✓</span></div><button @click="finish" class="bg-purple-600 hover:bg-purple-700 text-white font-black text-xl px-12 py-4 rounded-2xl">Next →</button></div></template>
       </div>
-      <aside class="w-64 flex-shrink-0 bg-white border-l border-gray-200 p-5 flex flex-col gap-5"><div class="text-center"><div class="text-sm text-gray-500 uppercase tracking-wide">Exercise</div><div class="text-4xl font-black text-gray-800">{{ exerciseNumber }} <span class="text-xl text-gray-400">/ {{ config.exerciseCount }}</span></div><div class="flex justify-center gap-2 mt-3"><span v-for="n in config.exerciseCount" :key="n" :class="['w-8 h-8 rounded-full grid place-items-center font-bold', n < exerciseNumber ? 'bg-green-500 text-white' : n === exerciseNumber ? 'bg-purple-600 text-white' : 'border text-gray-400']">{{ n < exerciseNumber ? '✓' : n }}</span></div></div><div class="bg-amber-50 border border-amber-200 rounded-2xl p-4 text-center"><div class="text-3xl">🪙 {{ coins }}</div><div class="text-xs text-amber-800 font-semibold">Coins earned</div></div><button v-if="!isComplete && config.supportLevel !== 'minimal'" @click="useHint" class="w-full py-3 rounded-2xl border-2 border-purple-200 text-purple-700 font-bold">💡 Hint</button><div class="mt-auto bg-[#f0f7f0] rounded-2xl p-4 text-center"><b class="text-green-800">{{ isComplete ? 'Great sentence!' : 'You can do it!' }}</b><p class="text-sm text-green-700 mt-1">{{ isComplete ? 'Press Next to continue.' : 'Take your time.' }}</p></div></aside>
+      <aside class="w-64 flex-shrink-0 bg-white border-l border-gray-200 p-5 flex flex-col gap-5"><div class="text-center"><div class="text-sm text-gray-500 uppercase tracking-wide">Exercise</div><div class="text-4xl font-black text-gray-800">{{ exerciseNumber }} <span class="text-xl text-gray-400">/ {{ config.exerciseCount }}</span></div><div class="flex justify-center gap-2 mt-3"><span v-for="n in config.exerciseCount" :key="n" :class="['w-8 h-8 rounded-full grid place-items-center font-bold', n < exerciseNumber ? 'bg-green-500 text-white' : n === exerciseNumber ? 'bg-purple-600 text-white' : 'border text-gray-400']">{{ n < exerciseNumber ? '✓' : n }}</span></div></div><div class="bg-purple-50 border border-purple-100 rounded-2xl p-4 text-center"><div class="text-2xl">🌟</div><div class="text-xs text-purple-800 font-semibold">Every try counts</div><p class="text-xs text-purple-700 mt-1">Hints and retries are recorded for your therapist.</p></div><button v-if="!isComplete && config.supportLevel !== 'minimal'" @click="useHint" class="w-full py-3 rounded-2xl border-2 border-purple-200 text-purple-700 font-bold">💡 Hint</button><div class="mt-auto bg-[#f0f7f0] rounded-2xl p-4 text-center"><b class="text-green-800">{{ isComplete ? 'Great sentence!' : 'You can do it!' }}</b><p class="text-sm text-green-700 mt-1">{{ isComplete ? 'Press Next to continue.' : 'Take your time.' }}</p></div></aside>
     </div>
   </BVChildShell>
 </template>
