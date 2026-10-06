@@ -2,6 +2,7 @@
 import { computed, ref } from 'vue'
 import BVClinicianShell from '../components/BVClinicianShell.vue'
 import type { SessionConfig, SupportLevel } from '../types/session'
+import { buildTopicPlan } from '../data/topicGenerator'
 const emit = defineEmits<{ start: [config: Omit<SessionConfig, 'launchContext'>]; back: [] }>()
 const typedAnswerEnabled = ref(true)
 const supportLevel = ref<SupportLevel>('standard')
@@ -9,7 +10,8 @@ const exerciseCount = ref(3)
 const topicsText = ref('Pirates, Everyday actions')
 const showResultsToChild = ref(true)
 const topics = computed(() => topicsText.value.split(',').map(v => v.trim()).filter(Boolean))
-const submit = () => emit('start', { typedAnswerEnabled: typedAnswerEnabled.value, supportLevel: supportLevel.value, exerciseCount: exerciseCount.value, topics: topics.value, showResultsToChild: showResultsToChild.value })
+const topicPlan = computed(() => buildTopicPlan(topics.value, exerciseCount.value))
+const submit = () => emit('start', { typedAnswerEnabled: typedAnswerEnabled.value, supportLevel: supportLevel.value, exerciseCount: exerciseCount.value, topics: topics.value.length ? topics.value : ['Everyday actions'], topicPlan: topicPlan.value, exerciseTemplateNumbers: topicPlan.value.map(plan => plan.exerciseTemplate), showResultsToChild: showResultsToChild.value })
 </script>
 
 <template>
@@ -27,7 +29,7 @@ const submit = () => emit('start', { typedAnswerEnabled: typedAnswerEnabled.valu
             <label class="flex items-start gap-3 border rounded-lg bg-gray-50 p-3"><input v-model="showResultsToChild" type="checkbox" class="mt-1 accent-purple-600" /><span><b class="text-sm text-gray-700">Show detailed results to child</b><small class="block text-xs text-gray-500">If disabled, only a simple completion message is shown.</small></span></label>
           </div>
         </section>
-        <section class="bg-white border border-gray-200 rounded-xl p-5 h-fit"><h2 class="font-semibold text-gray-800 mb-4">Preview — child activity</h2><div class="flex gap-2 mb-5"><span class="flex-1 bg-orange-100 text-orange-700 rounded-lg p-3 text-center font-bold">WHO?</span><span class="flex-1 bg-yellow-100 text-yellow-700 rounded-lg p-3 text-center font-bold">DOING?</span><span class="flex-1 bg-green-100 text-green-700 rounded-lg p-3 text-center font-bold">WHAT?</span></div><div class="bg-gray-50 rounded-xl p-5 text-center text-gray-500">The child builds one sentence through three tasks.</div><dl class="grid grid-cols-3 gap-3 mt-5 text-center text-xs text-gray-500"><div><b class="block text-lg text-gray-800">{{ exerciseCount }}</b>exercises</div><div><b class="block text-lg text-gray-800">{{ typedAnswerEnabled ? 'On' : 'Off' }}</b>typed answers</div><div><b class="block text-lg text-gray-800 capitalize">{{ supportLevel }}</b>support</div></dl></section>
+        <section class="bg-white border border-gray-200 rounded-xl p-5 h-fit"><h2 class="font-semibold text-gray-800 mb-4">Preview — child activity</h2><div class="flex gap-2 mb-5"><span class="flex-1 bg-orange-100 text-orange-700 rounded-lg p-3 text-center font-bold">WHO?</span><span class="flex-1 bg-yellow-100 text-yellow-700 rounded-lg p-3 text-center font-bold">DOING?</span><span class="flex-1 bg-green-100 text-green-700 rounded-lg p-3 text-center font-bold">WHAT?</span></div><div class="bg-gray-50 rounded-xl p-5 text-center text-gray-500">The child builds one sentence through three tasks.</div><div class="mt-5 space-y-2"><p class="text-xs font-bold uppercase tracking-widest text-gray-400">Generated plan</p><div v-for="(plan, index) in topicPlan" :key="`${plan.requestedTopic}-${index}`" class="flex items-center justify-between rounded-lg border border-gray-100 px-3 py-2 text-sm"><span class="font-medium text-gray-700">{{ index + 1 }}. {{ plan.requestedTopic }}</span><span class="text-xs text-gray-500">{{ plan.matchedTopic }}<span v-if="plan.isFallback"> · safe fallback</span></span></div></div><dl class="grid grid-cols-3 gap-3 mt-5 text-center text-xs text-gray-500"><div><b class="block text-lg text-gray-800">{{ exerciseCount }}</b>exercises</div><div><b class="block text-lg text-gray-800">{{ typedAnswerEnabled ? 'On' : 'Off' }}</b>typed answers</div><div><b class="block text-lg text-gray-800 capitalize">{{ supportLevel }}</b>support</div></dl></section>
       </div>
       <div class="flex justify-end gap-3 mt-6"><button @click="submit" class="bg-purple-600 hover:bg-purple-700 text-white font-bold px-6 py-3 rounded-xl">Start training</button></div>
     </div>
